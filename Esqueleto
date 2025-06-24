@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa Virtual do Hospital</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 250px;
+      height: 100%;
+      background: #f4f4f4;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+    }
+    #viewer {
+      margin-left: 250px;
+      height: 100vh;
+      background: #000;
+    }
+    .andar {
+      margin-bottom: 10px;
+    }
+    .andar h3 {
+      margin: 5px 0;
+    }
+    .sala {
+      margin-left: 10px;
+      cursor: pointer;
+      color: #0077cc;
+    }
+    .sala:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h2>Mapa do Hospital</h2>
+    <div class="andar" id="andar-7">
+      <h3>7º Andar</h3>
+      <div class="sala" onclick="carregarSala('andar7_sala1')">Sala 1</div>
+      <div class="sala" onclick="carregarSala('andar7_sala2')">Sala 2</div>
+    </div>
+    <div class="andar" id="andar-6">
+      <h3>6º Andar</h3>
+      <div class="sala" onclick="carregarSala('andar6_sala1')">Sala 1</div>
+      <div class="sala" onclick="carregarSala('andar6_sala2')">Sala 2</div>
+    </div>
+    <!-- Repetir para os andares 5 até 1 -->
+  </div>
+  <div id="viewer">
+    <!-- Aqui será carregado o panorama 360° -->
+  </div>  <script src="./marzipano.js"></script> <!-- Você pode baixar e incluir localmente -->  <script>
+    const viewerElement = document.getElementById('viewer');
+    const viewer = new Marzipano.Viewer(viewerElement);
+
+    const salas = {
+      'andar7_sala1': {
+        image: './images/andar7_sala1.jpg',
+        hotspots: [
+          { yaw: 0.5, pitch: 0.1, icon: 'extintor.png', texto: 'Extintor de CO2' },
+          { yaw: 1.5, pitch: 0.2, icon: 'rota.png', texto: 'Saída de emergência' }
+        ]
+      },
+      'andar7_sala2': {
+        image: './images/andar7_sala2.jpg',
+        hotspots: []
+      }
+    };
+
+    function carregarSala(id) {
+      const sala = salas[id];
+      if (!sala) return;
+
+      const source = Marzipano.ImageUrlSource.fromString(sala.image);
+      const geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
+      const limiter = Marzipano.util.compose(
+        Marzipano.RectilinearView.limit.traditional(1024, 100*Math.PI/180),
+        Marzipano.RectilinearView.limit.yaw(-Math.PI, Math.PI)
+      );
+      const view = new Marzipano.RectilinearView(null, limiter);
+
+      const scene = viewer.createScene({ source, geometry, view, pinFirstLevel: true });
+      scene.switchTo();
+
+      sala.hotspots.forEach(h => {
+        scene.hotspotContainer().createHotspot(criarIcone(h), { yaw: h.yaw, pitch: h.pitch });
+      });
+    }
+
+    function criarIcone(hotspot) {
+      const el = document.createElement('img');
+      el.src = ./icons/${hotspot.icon};
+      el.alt = hotspot.texto;
+      el.style.width = '32px';
+      el.title = hotspot.texto;
+      return el;
+    }
+  </script></body>
+</html
